@@ -1,5 +1,20 @@
 from tests.fakes import FINAL_TEXT, fake_weather_model
-from weather_agent.agent import describe_graph, run
+from weather_agent.agent import describe_graph, make_model, run
+from weather_agent.fake_model import FakeWeatherChatModel
+
+
+def test_make_model_falls_back_to_the_fake_when_there_is_no_api_key(monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("MODEL_SOURCE", raising=False)
+
+    assert isinstance(make_model(), FakeWeatherChatModel)
+
+
+def test_make_model_uses_the_fake_when_asked_even_with_an_api_key(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    monkeypatch.setenv("MODEL_SOURCE", "fake")
+
+    assert isinstance(make_model(), FakeWeatherChatModel)
 
 
 def test_describe_graph_exposes_the_model_and_tools_nodes_and_their_edges():

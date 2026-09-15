@@ -11,12 +11,18 @@ from langchain_core.messages import HumanMessage
 from langchain_core.runnables.schema import StreamEvent
 from langchain_openai import ChatOpenAI
 
+from weather_agent.fake_model import FakeWeatherChatModel
 from weather_agent.graph import build_graph
 
 DEFAULT_MODEL = "gpt-5.4-mini"
 
 
 def make_model() -> BaseChatModel:
+    """OpenAI quando há chave; sem chave (ou com MODEL_SOURCE=fake), o modelo falso —
+    o Grafo, a Tool e o stream continuam reais."""
+    if os.environ.get("MODEL_SOURCE") == "fake" or not os.environ.get("OPENAI_API_KEY"):
+        return FakeWeatherChatModel()
+
     # Família de reasoning: não aceita `temperature`; `reasoning_effort="none"` minimiza
     # a latência até o primeiro token, o que importa num chat em SSE.
     return ChatOpenAI(

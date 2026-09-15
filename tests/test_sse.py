@@ -51,14 +51,14 @@ async def test_encoded_agent_events_expose_the_fields_the_front_reads():
 
     first_end, last_end = [p for p in payloads if p["event"] == "on_chat_model_end"]
     tool_call = first_end["data"]["output"]["kwargs"]["tool_calls"][0]
-    assert tool_call["id"] == "call_1"
     assert tool_call["name"] == "get_weather"
     assert tool_call["args"] == {"city": "São Paulo"}
     assert last_end["data"]["output"]["kwargs"]["content"].startswith("Em São Paulo")
 
     tool_end = next(p for p in payloads if p["event"] == "on_tool_end")
     output = tool_end["data"]["output"]["kwargs"]
-    assert output["tool_call_id"] == "call_1"
+    # O front pareia o Bloco Tool Call com o Resultado por este id.
+    assert output["tool_call_id"] == tool_call["id"]
     assert '"temp_c": 22' in output["content"]
 
     tool_start = next(p for p in payloads if p["event"] == "on_tool_start")
