@@ -1,13 +1,13 @@
-// Tipo → Renderer (AC-06). Duas famílias: on_chat_model_* e on_tool_*. Qualquer outro
-// Tipo lança erro.
+// Event Type → Renderer (AC-06). Two families: on_chat_model_* and on_tool_*. Any other
+// Event Type throws.
 //
-// Pintura (AC-07): tokens de on_chat_model_stream concatenam no Rascunho — tokens de
-// texto como texto, tokens de tool_call_chunks como a Tool Call em construção. O
-// on_chat_model_end daquela Passada substitui o Rascunho — pelo Texto Final se a mensagem
-// tem texto, e por Blocos de Tool Call se tem tool_calls. on_tool_start marca o Tool Call
-// como executando; on_tool_end cria o Bloco Resultado da Tool.
+// Painting (AC-07): on_chat_model_stream tokens concatenate into the Draft — text tokens
+// as text, tool_call_chunks as the Tool Call being assembled. That Pass's
+// on_chat_model_end replaces the Draft — with the Final Text if the message has text, and
+// with Tool Call Blocks if it has tool_calls. on_tool_start marks the Tool Call as running;
+// on_tool_end creates the Tool Result Block.
 //
-// Todo StreamEvent, de qualquer Tipo, também vai para o painel Stream da resposta.
+// Every StreamEvent, of any Event Type, also goes to the reply's Stream Panel.
 
 const RENDERERS = [
   [/^on_chat_model_/, renderChatModel],
@@ -18,7 +18,7 @@ export function render(view, type, event) {
   const match = RENDERERS.find(([pattern]) => pattern.test(type));
   if (!match) throw new Error(`No renderer for event type: ${type}`);
   view.logEvent(type, event.name, summarize(type, event));
-  // Todo StreamEvent nasce dentro de um nó do Grafo; o LangGraph anota qual.
+  // Every StreamEvent is born inside a Graph node; LangGraph records which one.
   view.activateNode(event.metadata?.langgraph_node);
   match[1](view, type, event);
 }
@@ -41,7 +41,7 @@ function renderChatModel(view, type, event) {
       const message = outputOf(event);
       view.replaceDraftWithFinalText(textOf(message.content));
       if (message.tool_calls?.length) view.addToolCalls(message.tool_calls);
-      else view.activateNode("__end__"); // sem Tool Call, tools_condition leva a END
+      else view.activateNode("__end__"); // no Tool Call: tools_condition leads to END
       return;
     }
     default:
@@ -67,7 +67,7 @@ function renderTool(view, type, event) {
   }
 }
 
-// Uma linha por StreamEvent para o painel Stream.
+// One line per StreamEvent for the Stream Panel.
 function summarize(type, event) {
   switch (type) {
     case "on_chat_model_stream": {
@@ -98,9 +98,9 @@ function summarize(type, event) {
   }
 }
 
-// O `data` do SSE é o StreamEvent serializado com langchain_core.load.dumps (ADR-0001):
-// as mensagens LangChain chegam como {lc, type, id, kwargs}. Só estes dois acessores
-// conhecem esse formato.
+// The SSE `data` is the StreamEvent serialized with langchain_core.load.dumps (ADR-0001):
+// LangChain messages arrive as {lc, type, id, kwargs}. Only these two accessors know that
+// format.
 function chunkOf(event) {
   return event.data.chunk.kwargs;
 }
@@ -109,7 +109,7 @@ function outputOf(event) {
   return event.data.output.kwargs;
 }
 
-// O `content` de uma mensagem pode ser string ou lista de partes {type: "text", text}.
+// A message's `content` may be a string or a list of parts {type: "text", text}.
 function textOf(content) {
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {

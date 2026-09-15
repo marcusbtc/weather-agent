@@ -165,7 +165,7 @@ web/
   graph.js        graph SVG (layered layout) and active node
 tests/
 docs/adr/         architecture decisions
-CONTEXT.md        domain glossary (in Portuguese, the exercise's language)
+CONTEXT.md        domain glossary
 ```
 
 ## Out of scope

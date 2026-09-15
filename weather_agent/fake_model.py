@@ -1,13 +1,14 @@
-"""Modelo falso, sem LLM: o fallback quando não há OPENAI_API_KEY (ex.: demo na Vercel).
+"""Fake chat model, no LLM: the fallback when there is no OPENAI_API_KEY (e.g. the Vercel
+demo).
 
-Faz o que um modelo de verdade faria neste Grafo, de forma determinística:
-- diante da Mensagem do usuário, pede `get_weather` com a cidade que aparece depois de
-  «em» ou «in» («Qual o clima em Curitiba?» → Curitiba; «weather in Lisbon?» → Lisbon;
-  sem cidade, São Paulo);
-- diante do Resultado da Tool, responde no idioma da pergunta:
-  «Em <cidade> faz <temp>°C, <condição>.» ou «In <city> it's <temp>°C, <condition>.»
+Does what a real model would do in this Graph, deterministically:
+- given the user's Message, asks for `get_weather` with the city that follows "in" or "em"
+  ("weather in Lisbon?" → Lisbon; "Qual o clima em Curitiba?" → Curitiba; São Paulo if
+  none);
+- given the Tool Result, answers in the question's language:
+  "In <city> it's <temp>°C, <condition>." or "Em <city> faz <temp>°C, <condition>."
 
-Emite tokens em stream com um pequeno atraso para o Rascunho crescer visivelmente.
+Streams tokens with a small delay so the Draft visibly grows.
 """
 
 import asyncio
@@ -69,7 +70,7 @@ class FakeWeatherChatModel(BaseChatModel):
             yield chunk
             await asyncio.sleep(self.token_delay)
 
-    # ── decisão ──────────────────────────────────────────────────────────────────
+    # ── decision ─────────────────────────────────────────────────────────────────
 
     def _decide(self, messages: list[BaseMessage]) -> AIMessage:
         last = messages[-1]
@@ -105,7 +106,7 @@ class FakeWeatherChatModel(BaseChatModel):
             return "Could not read the tool result." if language == "en" else "Não consegui ler o resultado da tool."
         return ANSWERS[language].format(**weather)
 
-    # ── stream ───────────────────────────────────────────────────────────────────
+    # ── streaming ────────────────────────────────────────────────────────────────
 
     @staticmethod
     def _chunks(message: AIMessage) -> list[ChatGenerationChunk]:

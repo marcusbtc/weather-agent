@@ -1,7 +1,7 @@
-"""HTTP (AC-01): `POST /agent/execute` chama o Agent e devolve o fluxo como SSE.
+"""HTTP (AC-01): `POST /agent/execute` calls the Agent and returns the flow as SSE.
 
-A rota não monta o Grafo nem itera o stream — só embrulha o que o Agent emite. O front
-estático em `web/` é servido pela mesma app (ver docs/adr/0002).
+The route neither builds the Graph nor iterates the stream — it only wraps what the Agent
+emits. The static front end in `web/` is served by the same app (see docs/adr/0002).
 """
 
 from collections.abc import AsyncIterator, Callable
@@ -50,6 +50,7 @@ def create_app(
     return app
 
 
-# O .env da raiz é a fonte da chave (AC-09): vence um OPENAI_API_KEY herdado do shell.
+# The root .env is the source of the key (AC-09): it wins over an OPENAI_API_KEY inherited
+# from the shell.
 load_dotenv(override=True)
 app = create_app()

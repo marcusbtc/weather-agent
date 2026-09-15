@@ -1,10 +1,12 @@
-"""Infra de teste: modelo falso sem atraso, StreamEvents à mão e desmontagem de frames SSE."""
+"""Test infrastructure: the fake model with no delay, hand-built StreamEvents and SSE frame
+parsing."""
 
 import json
 
 from weather_agent.fake_model import FakeWeatherChatModel
 
-# O que o FakeWeatherChatModel responde ao stub de get_weather para São Paulo.
+# What FakeWeatherChatModel answers to the get_weather stub for São Paulo (Portuguese
+# question → Portuguese answer).
 FINAL_TEXT = "Em São Paulo faz 22°C, parcialmente nublado."
 
 
@@ -13,7 +15,7 @@ def fake_weather_model() -> FakeWeatherChatModel:
 
 
 def stream_event(event: str, name: str, data: dict, run_id: str = "run-1") -> dict:
-    """Um StreamEvent v2 montado à mão, com os metadados que o astream_events sempre traz."""
+    """A hand-built v2 StreamEvent, with the metadata astream_events always carries."""
     return {
         "event": event,
         "name": name,
@@ -26,6 +28,6 @@ def stream_event(event: str, name: str, data: dict, run_id: str = "run-1") -> di
 
 
 def parse_frame(frame: str) -> tuple[str, dict]:
-    """Desmonta um frame SSE em (linha event, data parseado)."""
+    """Splits an SSE frame into (event line, parsed data)."""
     event_line, data_line = frame.rstrip("\n").split("\n")
     return event_line, json.loads(data_line.removeprefix("data: "))

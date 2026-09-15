@@ -1,7 +1,7 @@
-"""O Grafo: nó de modelo ↔ nó de tools (AC-03).
+"""The Graph: model node ↔ tools node (AC-03).
 
-Se o modelo pede uma Tool, vai para `tools` e volta para `model`; quando não pede,
-termina. O modelo é injetado para o Grafo ser testável sem OpenAI.
+If the model asks for a Tool, control goes to `tools` and back to `model`; when it does
+not, the graph ends. The model is injected so the Graph is testable without OpenAI.
 """
 
 from langchain_core.language_models import BaseChatModel

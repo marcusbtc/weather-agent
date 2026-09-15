@@ -1,8 +1,8 @@
-"""Clima real via Open-Meteo (sem chave): geocodifica a cidade e lê as condições atuais.
+"""Live weather via Open-Meteo (no key): geocodes the city and reads current conditions.
 
-Devolve o mesmo contrato do stub — {"city", "temp_c", "condition"} — para o Grafo e o
-front não distinguirem a fonte. Só é usado quando WEATHER_SOURCE=live (ver tools.py);
-o enunciado pede o stub.
+Returns the stub's contract — {"city", "temp_c", "condition"} — so the Graph and the front
+end cannot tell the sources apart. Only used when WEATHER_SOURCE=live (see tools.py); the
+exercise asks for the stub. Condition labels are in Portuguese, matching the stub's.
 """
 
 import httpx
@@ -11,7 +11,7 @@ GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 TIMEOUT_SECONDS = 10
 
-# Códigos WMO 4677 usados pelo Open-Meteo em `weather_code`.
+# WMO 4677 codes used by Open-Meteo in `weather_code`.
 WMO_CONDITIONS = {
     0: "céu limpo",
     1: "predominantemente limpo",
@@ -75,7 +75,7 @@ async def _geocode(city: str, client: httpx.AsyncClient) -> dict:
     response.raise_for_status()
     results = response.json().get("results") or []
     if not results:
-        raise CityNotFound(f"Cidade não encontrada: {city}")
+        raise CityNotFound(f"City not found: {city}")
     return results[0]
 
 

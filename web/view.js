@@ -1,6 +1,6 @@
-// A resposta do agent na tela: uma sequência de Blocos (Tool Call, Resultado da Tool,
-// Texto) mais um painel Stream com todos os StreamEvents recebidos. Os Renderers só
-// falam com esta interface; nada de DOM em renderers.js.
+// The agent's reply on screen: a sequence of Blocks (Tool Call, Tool Result, Text) plus a
+// Stream Panel with every StreamEvent received. Renderers only talk to this interface; no
+// DOM in renderers.js.
 
 export function createResponseView(container, graphPanel) {
   const root = el("div", "response");
@@ -10,15 +10,15 @@ export function createResponseView(container, graphPanel) {
   graphPanel?.reset();
   graphPanel?.activate("__start__");
 
-  // Rascunho da Passada corrente, enquanto ela não terminou. Texto e Tool Call em
-  // construção são o mesmo Bloco: o que chega primeiro define a forma.
+  // Draft of the current Pass, while it has not finished. Text and Tool Call being
+  // assembled are the same Block: whatever arrives first sets the shape.
   let draft = null;
-  let toolCallDraft = null; // { name, args } acumulados dos tool_call_chunks
+  let toolCallDraft = null; // { name, args } accumulated from tool_call_chunks
 
-  // Blocos de Tool Call ainda sem Resultado. on_tool_start não traz o id da Tool Call,
-  // só o nome e um run_id; on_tool_end traz tool_call_id e o mesmo run_id. Por isso o
-  // start pareia por nome (primeiro Bloco ainda não iniciado) e registra o run_id, e o
-  // end resolve por tool_call_id, com run_id como reserva.
+  // Tool Call Blocks still without a Result. on_tool_start does not carry the Tool Call
+  // id, only the name and a run_id; on_tool_end carries tool_call_id and the same run_id.
+  // So start pairs by name (first Block not yet started) and records the run_id, and end
+  // resolves by tool_call_id, with run_id as fallback.
   const toolCallsById = new Map();
   const toolCallsByRunId = new Map();
 
@@ -128,7 +128,7 @@ export function createResponseView(container, graphPanel) {
   };
 }
 
-// Painel colapsável com uma linha por StreamEvent, na ordem em que chegaram.
+// Collapsible panel with one line per StreamEvent, in arrival order.
 function createStreamPanel(root) {
   const details = el("details", "stream");
   details.open = true;

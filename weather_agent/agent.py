@@ -1,6 +1,8 @@
-"""O Agent: compila o Grafo, chama `astream_events` e emite os StreamEvents (AC-02/04).
+"""The Agent: compiles the Graph, calls `astream_events` and emits the StreamEvents
+(AC-02/04).
 
-Não conhece HTTP nem SSE. O modelo é injetável para testes; por padrão vem do ambiente.
+Knows nothing about HTTP or SSE. The model is injectable for tests; by default it comes
+from the environment.
 """
 
 import os
@@ -18,13 +20,13 @@ DEFAULT_MODEL = "gpt-5.4-mini"
 
 
 def make_model() -> BaseChatModel:
-    """OpenAI quando há chave; sem chave (ou com MODEL_SOURCE=fake), o modelo falso —
-    o Grafo, a Tool e o stream continuam reais."""
+    """OpenAI when there is a key; without one (or with MODEL_SOURCE=fake), the fake model —
+    the Graph, the Tool and the stream stay real."""
     if os.environ.get("MODEL_SOURCE") == "fake" or not os.environ.get("OPENAI_API_KEY"):
         return FakeWeatherChatModel()
 
-    # Família de reasoning: não aceita `temperature`; `reasoning_effort="none"` minimiza
-    # a latência até o primeiro token, o que importa num chat em SSE.
+    # Reasoning-family model: it rejects `temperature`; `reasoning_effort="none"` minimizes
+    # time to first token, which matters in an SSE chat.
     return ChatOpenAI(
         model=os.environ.get("OPENAI_MODEL", DEFAULT_MODEL),
         reasoning_effort="none",
@@ -32,8 +34,8 @@ def make_model() -> BaseChatModel:
 
 
 def describe_graph(model: BaseChatModel | None = None) -> dict:
-    """Nós e arestas do Grafo compilado, para o front desenhar. Arestas condicionais são
-    as que saem de `tools_condition`."""
+    """Nodes and edges of the compiled Graph, for the front end to draw. Conditional edges
+    are the ones leaving `tools_condition`."""
     drawable = build_graph(model or make_model()).get_graph().to_json()
     return {
         "nodes": [node["id"] for node in drawable["nodes"]],

@@ -1,11 +1,11 @@
-// Lê um body `text/event-stream` vindo de `fetch` (POST) e produz um frame por
-// StreamEvent. EventSource só faz GET, por isso o parser é feito à mão.
+// Reads a `text/event-stream` body coming from `fetch` (POST) and yields one frame per
+// StreamEvent. EventSource only does GET, hence the hand-written parser.
 //
-// Cada frame produzido: { type, event } — `type` é a linha `event:` do SSE (o Tipo) e
-// `event` é o StreamEvent inteiro, já parseado da linha `data:`.
+// Each frame yielded: { type, event } — `type` is the SSE `event:` line (the Event Type)
+// and `event` is the whole StreamEvent, already parsed from the `data:` line.
 //
-// Se quem consome parar de iterar (por exemplo, um Renderer lançou erro), o reader é
-// cancelado e a conexão fecha.
+// If the consumer stops iterating (e.g. a Renderer threw), the reader is cancelled and the
+// connection closes.
 
 export async function* readSse(response) {
   const reader = response.body.getReader();

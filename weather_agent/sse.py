@@ -1,8 +1,8 @@
-"""Codifica StreamEvents como Server-Sent Events (AC-05).
+"""Encodes StreamEvents as Server-Sent Events (AC-05).
 
-`event` = o campo `event` do StreamEvent. `data` = o StreamEvent inteiro, serializado com
-`langchain_core.load.dumps` (ver docs/adr/0001). Uma linha `data:` por evento: `dumps`
-não produz quebras de linha, então cada frame é exatamente duas linhas.
+`event` = the StreamEvent's `event` field. `data` = the whole StreamEvent, serialized with
+`langchain_core.load.dumps` (see docs/adr/0001). One `data:` line per event: `dumps`
+emits no newlines, so every frame is exactly two lines.
 """
 
 from collections.abc import AsyncIterator

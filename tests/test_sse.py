@@ -42,7 +42,7 @@ async def test_encode_writes_one_sse_frame_per_event_with_the_whole_event_as_dat
 
 
 async def test_encoded_agent_events_expose_the_fields_the_front_reads():
-    """Contrato front↔back: os caminhos que renderers.js lê existem nos eventos reais."""
+    """Front↔back contract: the paths renderers.js reads exist in real events."""
     frames = [
         f
         async for f in encode(run("Qual o clima em São Paulo?", model=fake_weather_model()))
@@ -57,7 +57,7 @@ async def test_encoded_agent_events_expose_the_fields_the_front_reads():
 
     tool_end = next(p for p in payloads if p["event"] == "on_tool_end")
     output = tool_end["data"]["output"]["kwargs"]
-    # O front pareia o Bloco Tool Call com o Resultado por este id.
+    # The front end pairs the Tool Call Block with its Result by this id.
     assert output["tool_call_id"] == tool_call["id"]
     assert '"temp_c": 22' in output["content"]
 

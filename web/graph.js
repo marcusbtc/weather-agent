@@ -1,8 +1,8 @@
-// Desenha o Grafo do Agent (GET /agent/graph) como SVG e acende o nó ativo.
+// Draws the Agent's Graph (GET /agent/graph) as SVG and lights up the active node.
 //
-// Layout em camadas, da esquerda para a direita: a camada de um nó é a sua distância em
-// arestas a partir de __start__. Arestas condicionais (tools_condition) são tracejadas;
-// arestas que voltam para uma camada anterior (tools → model) passam por baixo.
+// Layered layout, left to right: a node's layer is its edge distance from __start__.
+// Conditional edges (tools_condition) are dashed; edges going back to an earlier layer
+// (tools → model) route underneath.
 
 const NODE_W = 104;
 const NODE_H = 36;
@@ -45,7 +45,7 @@ export async function createGraphPanel(container) {
 
 function draw({ nodes, edges }) {
   const layerOf = layers(nodes, edges);
-  const rows = new Map(); // camada → ids na ordem
+  const rows = new Map(); // layer → ids in order
   for (const id of nodes) {
     const layer = layerOf.get(id);
     if (!rows.has(layer)) rows.set(layer, []);
@@ -115,7 +115,7 @@ function draw({ nodes, edges }) {
   return svg;
 }
 
-// Camada = menor número de arestas desde __start__ (busca em largura).
+// Layer = fewest edges from __start__ (breadth-first search).
 function layers(nodes, edges) {
   const out = new Map();
   for (const e of edges) {

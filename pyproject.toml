@@ -1,7 +1,7 @@
 [project]
 name = "weather-agent"
 version = "0.1.0"
-description = "Agent LangGraph com tool de clima (stub) e chat em SSE — Praxis P1"
+description = "LangGraph agent with a weather tool (stub) and an SSE chat — Praxis P1"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.141",

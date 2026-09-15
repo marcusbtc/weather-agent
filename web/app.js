@@ -9,8 +9,8 @@ const sendButton = document.querySelector("#send");
 const history = document.querySelector("#history");
 const graphContainer = document.querySelector("#graph");
 
-// O Grafo é o mesmo para todas as Execuções; carrega uma vez. Se falhar, o chat segue
-// sem o desenho.
+// The Graph is the same for every Execution; load it once. If it fails, the chat goes on
+// without the drawing.
 const graphPanel = await createGraphPanel(graphContainer).catch((error) => {
   console.error(error);
   graphContainer.textContent = `Graph unavailable: ${error.message}`;
@@ -38,7 +38,7 @@ form.addEventListener("submit", async (submit) => {
   }
 });
 
-// Cada Execução é independente: só a Mensagem atual vai ao servidor.
+// Every Execution is independent: only the current Message goes to the server.
 async function execute(message, view) {
   const response = await fetch("/agent/execute", {
     method: "POST",
