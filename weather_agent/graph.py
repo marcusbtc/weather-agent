@@ -14,8 +14,9 @@ from weather_agent.tools import TOOLS
 
 SYSTEM_PROMPT = (
     "You are a weather assistant. To answer about a city's weather, call the get_weather "
-    "tool, then reply in one sentence, in the user's language, stating the temperature "
-    "in °C and the condition exactly as the tool returned them."
+    "tool, then reply in one sentence written entirely in the user's language, stating the "
+    "temperature in °C exactly as returned and the condition translated into that language "
+    "(the tool returns it in Portuguese)."
 )
 
 

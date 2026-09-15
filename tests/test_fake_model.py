@@ -32,7 +32,21 @@ def test_fake_model_understands_an_english_question_and_answers_in_english():
             ToolMessage(content=json.dumps(tool_result), tool_call_id="call_1"),
         ]
     )
-    assert answer.content == "In New York it's 22°C, parcialmente nublado."
+    assert answer.content == "In New York it's 22°C, partly cloudy."
+
+
+def test_fake_model_translates_live_conditions_when_answering_in_english():
+    question = HumanMessage("What's the weather in Curitiba?")
+    tool_result = {"city": "Curitiba, Brasil", "temp_c": 14.0, "condition": "chuvisco moderado"}
+
+    answer = FakeWeatherChatModel().invoke(
+        [
+            question,
+            AIMessage(content="", tool_calls=[{"id": "call_1", "name": "get_weather", "args": {"city": "Curitiba"}}]),
+            ToolMessage(content=json.dumps(tool_result), tool_call_id="call_1"),
+        ]
+    )
+    assert answer.content == "In Curitiba, Brasil it's 14.0°C, moderate drizzle."
 
 
 def test_fake_model_defaults_to_sao_paulo_when_no_city_is_named():

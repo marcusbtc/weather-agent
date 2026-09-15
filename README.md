@@ -99,10 +99,12 @@ weather code from [Open-Meteo](https://open-meteo.com/), keeping the same JSON s
 `FakeWeatherChatModel` does what a real model would do in this graph, deterministically:
 given the user's message it asks for `get_weather` with the city that follows "in" or "em"
 ("What's the weather in Lisbon?" → Lisbon; "Qual o clima em Curitiba?" → Curitiba; São
-Paulo if none), and given the tool result it answers in the question's language — "In
-<city> it's <temp>°C, <condition>." or "Em <city> faz <temp>°C, <condition>." — streamed
-token by token with a small delay so the draft visibly grows. The stub's condition string
-stays in Portuguese (`parcialmente nublado`), as the exercise fixes it.
+Paulo if none), and given the tool result it answers entirely in the question's language —
+"In <city> it's 22°C, partly cloudy." or "Em <city> faz 22°C, parcialmente nublado." —
+streamed token by token with a small delay so the draft visibly grows. The tools return
+the condition in Portuguese (the stub's `parcialmente nublado` is fixed by the exercise);
+`weather_agent/conditions.py` translates it for English answers, and the real model is
+told to do the same.
 
 ## API
 
@@ -154,6 +156,7 @@ weather_agent/
   graph.py        StateGraph: model node ↔ tools node (ToolNode + tools_condition)
   agent.py        compiles the graph, streams astream_events v2, describes the graph
   fake_model.py   deterministic chat model used when there is no API key
+  conditions.py   Portuguese → English condition labels for English answers
   sse.py          StreamEvent → SSE frame (event + data)
   main.py         POST /agent/execute, GET /agent/graph, static front end at /
 web/

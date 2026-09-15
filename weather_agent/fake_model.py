@@ -5,8 +5,9 @@ Does what a real model would do in this Graph, deterministically:
 - given the user's Message, asks for `get_weather` with the city that follows "in" or "em"
   ("weather in Lisbon?" → Lisbon; "Qual o clima em Curitiba?" → Curitiba; São Paulo if
   none);
-- given the Tool Result, answers in the question's language:
-  "In <city> it's <temp>°C, <condition>." or "Em <city> faz <temp>°C, <condition>."
+- given the Tool Result, answers entirely in the question's language, translating the
+  tool's Portuguese condition label when needed:
+  "In <city> it's <temp>°C, partly cloudy." or "Em <city> faz <temp>°C, parcialmente nublado."
 
 Streams tokens with a small delay so the Draft visibly grows.
 """
@@ -22,6 +23,8 @@ from langchain_core.callbacks import AsyncCallbackManagerForLLMRun, CallbackMana
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, HumanMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
+
+from weather_agent.conditions import translate_condition
 
 DEFAULT_CITY = "São Paulo"
 CITY_PATTERN = re.compile(r"\b(em|in)\s+([^?!.,;]+)", re.IGNORECASE)
@@ -104,6 +107,7 @@ class FakeWeatherChatModel(BaseChatModel):
             weather = json.loads(str(tool_message.content))
         except json.JSONDecodeError:
             return "Could not read the tool result." if language == "en" else "Não consegui ler o resultado da tool."
+        weather["condition"] = translate_condition(weather["condition"], language)
         return ANSWERS[language].format(**weather)
 
     # ── streaming ────────────────────────────────────────────────────────────────
