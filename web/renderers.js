@@ -18,6 +18,8 @@ export function render(view, type, event) {
   const match = RENDERERS.find(([pattern]) => pattern.test(type));
   if (!match) throw new Error(`Tipo sem Renderer: ${type}`);
   view.logEvent(type, event.name, summarize(type, event));
+  // Todo StreamEvent nasce dentro de um nó do Grafo; o LangGraph anota qual.
+  view.activateNode(event.metadata?.langgraph_node);
   match[1](view, type, event);
 }
 
@@ -39,6 +41,7 @@ function renderChatModel(view, type, event) {
       const message = outputOf(event);
       view.replaceDraftWithFinalText(textOf(message.content));
       if (message.tool_calls?.length) view.addToolCalls(message.tool_calls);
+      else view.activateNode("__end__"); // sem Tool Call, tools_condition leva a END
       return;
     }
     default:

@@ -17,11 +17,29 @@ def fake_run_agent(message: str):
     return events()
 
 
+GRAPH = {
+    "nodes": ["__start__", "model", "__end__"],
+    "edges": [{"source": "__start__", "target": "model", "conditional": False}],
+}
+
+
+def fake_describe_graph():
+    return GRAPH
+
+
 @pytest.fixture
 async def client():
-    transport = httpx.ASGITransport(app=create_app(run_agent=fake_run_agent))
+    app = create_app(run_agent=fake_run_agent, describe_graph=fake_describe_graph)
+    transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
+
+
+async def test_graph_endpoint_returns_the_agent_graph_description(client):
+    response = await client.get("/agent/graph")
+
+    assert response.status_code == 200
+    assert response.json() == GRAPH
 
 
 async def test_execute_streams_the_agent_events_as_sse(client):

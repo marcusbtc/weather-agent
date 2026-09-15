@@ -49,6 +49,22 @@ O modelo padrão é da família de reasoning: não aceita `temperature`; usamos
 O `.env` da raiz vence variáveis já exportadas no shell (`load_dotenv(override=True)`): se
 você tem um `OPENAI_API_KEY` antigo no `~/.zshenv`, a chave do `.env` é a que vale.
 
+## O grafo
+
+```mermaid
+graph LR
+    __start__([start]) --> model
+    model -.->|tool_calls| tools
+    model -.->|sem tool_calls| __end__([end])
+    tools --> model
+```
+
+`GET /agent/graph` devolve nós e arestas do grafo compilado (`get_graph().to_json()`,
+reduzido a `{nodes, edges}`); o front desenha esse JSON como SVG no topo da página e
+acende o nó ativo a cada `StreamEvent`, lendo `metadata.langgraph_node` — o nó em que o
+LangGraph diz que o evento nasceu. Numa execução típica: `start → model → tools → model →
+end`.
+
 ## Testar via curl
 
 ```bash
@@ -87,13 +103,14 @@ weather_agent/
   graph.py    StateGraph: nó model ↔ nó tools (ToolNode + tools_condition)
   agent.py    compila o grafo e emite os StreamEvents de astream_events v2
   sse.py      StreamEvent → frame SSE (event + data)
-  main.py     POST /agent/execute + front estático em /
+  main.py     POST /agent/execute, GET /agent/graph, front estático em /
 web/
   index.html, styles.css
-  app.js        formulário → fetch POST → loop de frames → render
+  app.js        carrega o grafo; formulário → fetch POST → loop de frames → render
   sse.js        parser de text/event-stream sobre fetch
   renderers.js  tipo de evento → renderer (on_chat_model_* | on_tool_*), senão erro
-  view.js       blocos na tela: rascunho, tool call, resultado, texto final
+  view.js       blocos na tela: rascunho, tool call, resultado, texto final; painel Stream
+  graph.js      SVG do grafo (layout em camadas) e nó ativo
 tests/
 docs/adr/       decisões de arquitetura
 CONTEXT.md      glossário do domínio

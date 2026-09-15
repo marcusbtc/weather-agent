@@ -1,5 +1,19 @@
 from tests.fakes import FINAL_TEXT, fake_weather_model
-from weather_agent.agent import run
+from weather_agent.agent import describe_graph, run
+
+
+def test_describe_graph_exposes_the_model_and_tools_nodes_and_their_edges():
+    description = describe_graph(model=fake_weather_model())
+
+    assert description["nodes"] == ["__start__", "model", "tools", "__end__"]
+    assert {
+        (e["source"], e["target"], e["conditional"]) for e in description["edges"]
+    } == {
+        ("__start__", "model", False),
+        ("model", "tools", True),
+        ("model", "__end__", True),
+        ("tools", "model", False),
+    }
 
 
 async def test_agent_emits_only_chat_model_and_tool_events_in_execution_order():

@@ -34,6 +34,73 @@ body {
   gap: 16px;
 }
 
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.graph {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.graph-svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.graph-svg .node rect {
+  fill: var(--panel);
+  stroke: var(--border);
+  stroke-width: 1.5;
+  transition: fill 150ms, stroke 150ms;
+}
+
+.graph-svg .node.terminal rect {
+  stroke-dasharray: 3 3;
+}
+
+.graph-svg .node text {
+  fill: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  text-anchor: middle;
+}
+
+.graph-svg .node.active rect {
+  fill: color-mix(in srgb, var(--accent) 30%, var(--panel));
+  stroke: var(--accent);
+}
+
+.graph-svg .node.active[data-id="tools"] rect {
+  fill: color-mix(in srgb, var(--tool) 30%, var(--panel));
+  stroke: var(--tool);
+}
+
+.graph-svg .edge {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  transition: stroke 150ms;
+}
+
+.graph-svg .edge.conditional {
+  stroke-dasharray: 5 4;
+}
+
+.graph-svg .edge.active {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.graph-svg marker path {
+  fill: var(--muted);
+}
+
 .chat-header h1 {
   margin: 0;
   font-size: 20px;

@@ -19,13 +19,17 @@ from weather_agent import agent, sse
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 
 RunAgent = Callable[[str], AsyncIterator[StreamEvent]]
+DescribeGraph = Callable[[], dict]
 
 
 class ExecuteBody(BaseModel):
     message: str
 
 
-def create_app(run_agent: RunAgent = agent.run) -> FastAPI:
+def create_app(
+    run_agent: RunAgent = agent.run,
+    describe_graph: DescribeGraph = agent.describe_graph,
+) -> FastAPI:
     app = FastAPI(title="Weather Agent")
 
     @app.post("/agent/execute")
@@ -35,6 +39,10 @@ def create_app(run_agent: RunAgent = agent.run) -> FastAPI:
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache"},
         )
+
+    @app.get("/agent/graph")
+    async def graph() -> dict:
+        return describe_graph()
 
     if WEB_DIR.is_dir():
         app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")

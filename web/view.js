@@ -2,11 +2,13 @@
 // Texto) mais um painel Stream com todos os StreamEvents recebidos. Os Renderers só
 // falam com esta interface; nada de DOM em renderers.js.
 
-export function createResponseView(container) {
+export function createResponseView(container, graphPanel) {
   const root = el("div", "response");
   container.appendChild(root);
 
   const stream = createStreamPanel(root);
+  graphPanel?.reset();
+  graphPanel?.activate("__start__");
 
   // Rascunho da Passada corrente, enquanto ela não terminou. Texto e Tool Call em
   // construção são o mesmo Bloco: o que chega primeiro define a forma.
@@ -39,6 +41,10 @@ export function createResponseView(container) {
   return {
     logEvent(type, name, summary) {
       stream.add(type, name, summary);
+    },
+
+    activateNode(nodeId) {
+      graphPanel?.activate(nodeId);
     },
 
     startPass() {

@@ -25,6 +25,23 @@ def make_model() -> BaseChatModel:
     )
 
 
+def describe_graph(model: BaseChatModel | None = None) -> dict:
+    """Nós e arestas do Grafo compilado, para o front desenhar. Arestas condicionais são
+    as que saem de `tools_condition`."""
+    drawable = build_graph(model or make_model()).get_graph().to_json()
+    return {
+        "nodes": [node["id"] for node in drawable["nodes"]],
+        "edges": [
+            {
+                "source": edge["source"],
+                "target": edge["target"],
+                "conditional": bool(edge.get("conditional", False)),
+            }
+            for edge in drawable["edges"]
+        ],
+    }
+
+
 async def run(message: str, model: BaseChatModel | None = None) -> AsyncIterator[StreamEvent]:
     graph = build_graph(model or make_model())
 
