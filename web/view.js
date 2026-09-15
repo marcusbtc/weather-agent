@@ -1,11 +1,17 @@
 // A resposta do agent na tela: uma sequência de Blocos (Tool Call, Resultado da Tool,
-// Texto). Os Renderers só falam com esta interface; nada de DOM em renderers.js.
+// Texto) mais um painel Stream com todos os StreamEvents recebidos. Os Renderers só
+// falam com esta interface; nada de DOM em renderers.js.
 
 export function createResponseView(container) {
   const root = el("div", "response");
   container.appendChild(root);
 
-  let draft = null; // Bloco de texto da Passada corrente, enquanto não terminou
+  const stream = createStreamPanel(root);
+
+  // Rascunho da Passada corrente, enquanto ela não terminou. Texto e Tool Call em
+  // construção são o mesmo Bloco: o que chega primeiro define a forma.
+  let draft = null;
+  let toolCallDraft = null; // { name, args } acumulados dos tool_call_chunks
 
   // Blocos de Tool Call ainda sem Resultado. on_tool_start não traz o id da Tool Call,
   // só o nome e um run_id; on_tool_end traz tool_call_id e o mesmo run_id. Por isso o
@@ -24,7 +30,17 @@ export function createResponseView(container) {
     root.appendChild(draft);
   }
 
+  function dropDraft() {
+    draft?.remove();
+    draft = null;
+    toolCallDraft = null;
+  }
+
   return {
+    logEvent(type, name, summary) {
+      stream.add(type, name, summary);
+    },
+
     startPass() {
       ensureDraft();
       scroll();
@@ -36,17 +52,26 @@ export function createResponseView(container) {
       scroll();
     },
 
+    appendToolCallDraft(name, args) {
+      ensureDraft();
+      if (!toolCallDraft) {
+        toolCallDraft = { name: "", args: "" };
+        draft.classList.add("block-tool-call");
+        draft.appendChild(label("Tool call · montando…", "status"));
+        draft.appendChild(code(""));
+      }
+      toolCallDraft.name += name;
+      toolCallDraft.args += args;
+      draft.querySelector(".code").textContent = `${toolCallDraft.name}(${toolCallDraft.args}`;
+      scroll();
+    },
+
     replaceDraftWithFinalText(text) {
-      if (!draft) {
-        if (!text) return;
-        ensureDraft();
-      }
-      if (text) {
-        draft.textContent = text;
-        draft.classList.remove("draft");
-      } else {
-        draft.remove();
-      }
+      if (toolCallDraft || !text) dropDraft();
+      if (!text) return;
+      ensureDraft();
+      draft.textContent = text;
+      draft.classList.remove("draft");
       draft = null;
       scroll();
     },
@@ -93,6 +118,34 @@ export function createResponseView(container) {
       block.textContent = message;
       root.appendChild(block);
       scroll();
+    },
+  };
+}
+
+// Painel colapsável com uma linha por StreamEvent, na ordem em que chegaram.
+function createStreamPanel(root) {
+  const details = el("details", "stream");
+  details.open = true;
+  const summary = el("summary", "stream-summary");
+  const list = el("ol", "stream-list");
+  details.appendChild(summary);
+  details.appendChild(list);
+  root.appendChild(details);
+
+  let count = 0;
+  summary.textContent = "Stream · 0 eventos";
+
+  return {
+    add(type, name, text) {
+      count += 1;
+      summary.textContent = `Stream · ${count} eventos`;
+
+      const item = el("li", `stream-item ${type.startsWith("on_tool_") ? "is-tool" : "is-model"}`);
+      item.appendChild(label(type, "stream-type"));
+      item.appendChild(label(name, "stream-name"));
+      item.appendChild(label(text, "stream-text"));
+      list.appendChild(item);
+      if (details.open) list.scrollTop = list.scrollHeight;
     },
   };
 }

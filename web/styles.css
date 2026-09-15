@@ -104,6 +104,55 @@ body {
   color: var(--error);
 }
 
+.block-tool-call.draft {
+  font-style: normal;
+  color: var(--text);
+  opacity: 0.75;
+}
+
+.stream {
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.stream-summary {
+  cursor: pointer;
+  color: var(--muted);
+  user-select: none;
+}
+
+.stream-list {
+  margin: 8px 0 0;
+  padding: 0 0 0 28px;
+  max-height: 240px;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.stream-item {
+  display: grid;
+  grid-template-columns: 170px 90px 1fr;
+  gap: 8px;
+  padding: 2px 0;
+  color: var(--muted);
+}
+
+.stream-item.is-model .stream-type {
+  color: var(--accent);
+}
+
+.stream-item.is-tool .stream-type {
+  color: var(--tool);
+}
+
+.stream-text {
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .status {
   font-size: 12px;
   text-transform: uppercase;

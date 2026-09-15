@@ -1,10 +1,13 @@
 // Tipo → Renderer (AC-06). Duas famílias: on_chat_model_* e on_tool_*. Qualquer outro
 // Tipo lança erro.
 //
-// Pintura (AC-07): tokens de on_chat_model_stream concatenam no Rascunho; o
+// Pintura (AC-07): tokens de on_chat_model_stream concatenam no Rascunho — tokens de
+// texto como texto, tokens de tool_call_chunks como a Tool Call em construção. O
 // on_chat_model_end daquela Passada substitui o Rascunho — pelo Texto Final se a mensagem
 // tem texto, e por Blocos de Tool Call se tem tool_calls. on_tool_start marca o Tool Call
 // como executando; on_tool_end cria o Bloco Resultado da Tool.
+//
+// Todo StreamEvent, de qualquer Tipo, também vai para o painel Stream da resposta.
 
 const RENDERERS = [
   [/^on_chat_model_/, renderChatModel],
@@ -14,6 +17,7 @@ const RENDERERS = [
 export function render(view, type, event) {
   const match = RENDERERS.find(([pattern]) => pattern.test(type));
   if (!match) throw new Error(`Tipo sem Renderer: ${type}`);
+  view.logEvent(type, event.name, summarize(type, event));
   match[1](view, type, event);
 }
 
@@ -23,8 +27,12 @@ function renderChatModel(view, type, event) {
       view.startPass();
       return;
     case "on_chat_model_stream": {
-      const text = textOf(chunkOf(event).content);
+      const chunk = chunkOf(event);
+      const text = textOf(chunk.content);
       if (text) view.appendDraft(text);
+      for (const part of chunk.tool_call_chunks ?? []) {
+        view.appendToolCallDraft(part.name ?? "", part.args ?? "");
+      }
       return;
     }
     case "on_chat_model_end": {
@@ -53,6 +61,37 @@ function renderTool(view, type, event) {
     }
     default:
       return;
+  }
+}
+
+// Uma linha por StreamEvent para o painel Stream.
+function summarize(type, event) {
+  switch (type) {
+    case "on_chat_model_stream": {
+      const chunk = chunkOf(event);
+      const text = textOf(chunk.content);
+      if (text) return JSON.stringify(text);
+      const parts = chunk.tool_call_chunks ?? [];
+      if (parts.length) {
+        return parts
+          .map((p) => `tool_call_chunk ${p.name ?? ""}${JSON.stringify(p.args ?? "")}`)
+          .join(" ");
+      }
+      return "(chunk vazio)";
+    }
+    case "on_chat_model_end": {
+      const message = outputOf(event);
+      if (message.tool_calls?.length) {
+        return message.tool_calls.map((c) => `${c.name}(${JSON.stringify(c.args)})`).join(", ");
+      }
+      return JSON.stringify(textOf(message.content));
+    }
+    case "on_tool_start":
+      return `input=${JSON.stringify(event.data.input)}`;
+    case "on_tool_end":
+      return `output=${outputOf(event).content}`;
+    default:
+      return "";
   }
 }
 

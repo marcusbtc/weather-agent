@@ -24,10 +24,15 @@ call, o JSON do stub e a frase com 22°C aparecerem em sequência.
 
 ### Variáveis de ambiente (`.env` na raiz, gitignored)
 
-| Variável         | Obrigatória | Padrão          |
-| ---------------- | ----------- | --------------- |
-| `OPENAI_API_KEY` | sim         | —               |
-| `OPENAI_MODEL`   | não         | `gpt-5.4-mini`  |
+| Variável          | Obrigatória | Padrão                          |
+| ----------------- | ----------- | ------------------------------- |
+| `OPENAI_API_KEY`  | sim         | —                               |
+| `OPENAI_MODEL`    | não         | `gpt-5.4-mini`                  |
+| `OPENAI_BASE_URL` | não         | API da OpenAI                   |
+
+Para usar um provedor compatível com a API da OpenAI (ex.: OpenRouter), aponte
+`OPENAI_BASE_URL=https://openrouter.ai/api/v1` e use o id do modelo no formato do provedor
+(`OPENAI_MODEL=openai/gpt-5.4-mini`), com a chave do provedor em `OPENAI_API_KEY`.
 
 O modelo padrão é da família de reasoning: não aceita `temperature`; usamos
 `reasoning_effort="none"` para o primeiro token chegar rápido.
@@ -86,12 +91,16 @@ CONTEXT.md      glossário do domínio
 
 ## Como o front pinta (AC-06/07)
 
-- `on_chat_model_start` abre um rascunho; `on_chat_model_stream` concatena tokens nele.
+- `on_chat_model_start` abre um rascunho; `on_chat_model_stream` concatena tokens nele —
+  tokens de texto como texto, `tool_call_chunks` como a tool call em construção
+  (`get_weather({"city":"São Pa…`).
 - `on_chat_model_end` substitui o rascunho daquela passada: por blocos de **tool call** se a
   mensagem tem `tool_calls`, pelo **texto final** se tem texto.
 - `on_tool_start` marca o tool call como executando; `on_tool_end` cria o bloco
   **resultado da tool**.
 - Qualquer outro tipo de evento lança erro, que aparece na tela.
+- Cada resposta tem um painel **Stream** com uma linha por `StreamEvent` recebido (tipo,
+  nome, resumo), na ordem de chegada — o mesmo que o `curl` mostra, na tela.
 
 ## Fora de escopo
 

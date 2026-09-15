@@ -65,8 +65,14 @@ _Avoid_: handler, view, componente
 
 **Rascunho**:
 A concatenação dos tokens de `on_chat_model_stream` de uma Passada, visível enquanto a
-Passada não terminou. Substituído inteiro pelo Texto Final no `on_chat_model_end`.
+Passada não terminou — texto, ou a Tool Call em construção. Substituído inteiro no
+`on_chat_model_end`.
 _Avoid_: buffer, parcial, preview
+
+**Painel Stream**:
+A lista, dentro de uma resposta, de todos os StreamEvents recebidos na ordem de chegada.
+Mostra o fluxo bruto; não é um Bloco.
+_Avoid_: log, console, debug
 
 **Texto Final**:
 O conteúdo da mensagem completa de uma Passada, recebido em `on_chat_model_end`. Substitui
