@@ -200,10 +200,17 @@ body {
 
 .stream-item {
   display: grid;
-  grid-template-columns: 170px 90px 1fr;
+  grid-template-columns: 170px 120px 1fr;
   gap: 8px;
   padding: 2px 0;
   color: var(--muted);
+}
+
+.stream-type,
+.stream-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .stream-item.is-model .stream-type {

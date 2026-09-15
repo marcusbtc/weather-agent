@@ -1,80 +1,113 @@
-# Weather Agent — Praxis P1
+# Weather Agent
 
-Agent LangGraph com uma tool de clima (stub) e um chat em SSE. Um `POST /agent/execute`
-recebe uma mensagem, roda o grafo (modelo ↔ tools) e devolve os `StreamEvent`s de
-`astream_events` v2 como `text/event-stream`. O front lê o stream e pinta cada tipo de
-evento como um estado separado: tool call, resultado da tool, texto.
+A LangGraph agent with a weather tool and an SSE chat. `POST /agent/execute` takes a
+message, runs the graph (model ↔ tools) and streams the `astream_events` v2 `StreamEvent`s
+back as `text/event-stream`. The front end reads the stream and paints each event type as
+a separate state: tool call, tool result, text — while highlighting the active graph node.
 
-## Requisitos
+**Live demo:** https://weather-agent-beta.vercel.app · **Source:** https://github.com/marcusbtc/weather-agent
 
-- Python 3.12+ e [`uv`](https://docs.astral.sh/uv/)
-- Uma `OPENAI_API_KEY`
+![Weather Agent running: graph on top, event stream, tool call, tool result and final text](docs/screenshot.png)
 
-## Como subir API e front
+The demo runs with no API key: without `OPENAI_API_KEY` the agent falls back to a
+deterministic fake chat model — the graph, the tool, the event stream and the SSE are all
+real; only the LLM is replaced.
 
-```bash
-cp .env.example .env        # e preencha OPENAI_API_KEY
-uv sync
-uv run uvicorn weather_agent.main:app --reload
-```
-
-Um processo só: a API fica em `http://127.0.0.1:8000/agent/execute` e o front em
-`http://127.0.0.1:8000/`. Abra o front, pergunte «Qual o clima em São Paulo?» e veja o tool
-call, o JSON do stub e a frase com 22°C aparecerem em sequência.
-
-### Variáveis de ambiente (`.env` na raiz, gitignored)
-
-| Variável          | Obrigatória | Padrão                          |
-| ----------------- | ----------- | ------------------------------- |
-| `OPENAI_API_KEY`  | sim         | —                               |
-| `OPENAI_MODEL`    | não         | `gpt-5.4-mini`                  |
-| `OPENAI_BASE_URL` | não         | API da OpenAI                   |
-| `WEATHER_SOURCE`  | não         | `stub`                          |
-
-Para usar um provedor compatível com a API da OpenAI (ex.: OpenRouter), aponte
-`OPENAI_BASE_URL=https://openrouter.ai/api/v1` e use o id do modelo no formato do provedor
-(`OPENAI_MODEL=openai/gpt-5.4-mini`), com a chave do provedor em `OPENAI_API_KEY`.
-
-### Clima real (opcional, fora do enunciado)
-
-O AC-03 pede um stub: `get_weather` sem HTTP, `sleep ~2s`, sempre 22°C «parcialmente
-nublado». Esse é o padrão. Com `WEATHER_SOURCE=live` a tool consulta o clima real via
-[Open-Meteo](https://open-meteo.com/) (geocodificação + condições atuais, sem chave),
-mantendo o mesmo JSON `{"city", "temp_c", "condition"}`. Para a entrega avaliada pelos ACs,
-deixe o padrão (`stub`).
-
-O modelo padrão é da família de reasoning: não aceita `temperature`; usamos
-`reasoning_effort="none"` para o primeiro token chegar rápido.
-
-O `.env` da raiz vence variáveis já exportadas no shell (`load_dotenv(override=True)`): se
-você tem um `OPENAI_API_KEY` antigo no `~/.zshenv`, a chave do `.env` é a que vale.
-
-## O grafo
+## How it works
 
 ```mermaid
 graph LR
     __start__([start]) --> model
     model -.->|tool_calls| tools
-    model -.->|sem tool_calls| __end__([end])
+    model -.->|no tool_calls| __end__([end])
     tools --> model
 ```
 
-`GET /agent/graph` devolve nós e arestas do grafo compilado (`get_graph().to_json()`,
-reduzido a `{nodes, edges}`); o front desenha esse JSON como SVG no topo da página e
-acende o nó ativo a cada `StreamEvent`, lendo `metadata.langgraph_node` — o nó em que o
-LangGraph diz que o evento nasceu. Numa execução típica: `start → model → tools → model →
-end`.
+1. The user sends a message. Each `POST /agent/execute` is an independent execution — no
+   memory between requests.
+2. The **model** node decides. If it emits a tool call, the conditional edge goes to
+   **tools**; the `ToolNode` runs `get_weather(city)` and returns to **model**, which now
+   writes the final answer and the graph ends.
+3. The agent streams every `chat_model` and `tool` event
+   (`astream_events(version="v2", include_types=["chat_model", "tool"])`).
+4. The HTTP layer wraps each `StreamEvent` as one SSE frame: `event:` is the event type,
+   `data:` is the whole `StreamEvent` serialized with `langchain_core.load.dumps`.
+5. The front end dispatches on the event type — `on_chat_model_*` or `on_tool_*`, anything
+   else throws — and paints:
+   - `on_chat_model_stream` tokens concatenate into a **draft** (text tokens as text,
+     `tool_call_chunks` as the tool call being assembled: `get_weather({"city":"São Pa…`);
+   - `on_chat_model_end` replaces that pass's draft with the **final text**, or with
+     **tool call** blocks when the message has `tool_calls`;
+   - `on_tool_start` marks the tool call as running; `on_tool_end` adds the **tool result**
+     block;
+   - every event lights up its graph node (`metadata.langgraph_node`) and is listed in the
+     **Stream** panel.
 
-## Testar via curl
+## Running locally
+
+Requirements: Python 3.12+ and [`uv`](https://docs.astral.sh/uv/).
+
+```bash
+cp .env.example .env        # optional — see below
+uv sync
+uv run uvicorn weather_agent.main:app --reload
+```
+
+One process serves both: the API at `http://127.0.0.1:8000/agent/execute` and the front end
+at `http://127.0.0.1:8000/`. Ask "Qual o clima em São Paulo?" and watch the tool call, the
+tool result and the sentence appear in sequence.
+
+### Environment (`.env` at the repo root, gitignored)
+
+| Variable          | Required | Default        | Notes                                                        |
+| ----------------- | -------- | -------------- | ------------------------------------------------------------ |
+| `OPENAI_API_KEY`  | no       | —              | Without it, the fake chat model is used.                     |
+| `OPENAI_MODEL`    | no       | `gpt-5.4-mini` | Any OpenAI model with tool calling and streaming.            |
+| `OPENAI_BASE_URL` | no       | OpenAI API     | Any OpenAI-compatible endpoint, e.g. OpenRouter.             |
+| `MODEL_SOURCE`    | no       | —              | `fake` forces the fake model even when a key is set.         |
+| `WEATHER_SOURCE`  | no       | `stub`         | `live` fetches real weather from Open-Meteo (no key needed). |
+
+The `.env` file wins over variables already exported in your shell
+(`load_dotenv(override=True)`).
+
+`gpt-5.4-mini` is a reasoning-family model: it rejects `temperature`, so the agent sets
+`reasoning_effort="none"` for the fastest first token.
+
+**OpenRouter example**
+
+```dotenv
+OPENAI_API_KEY=sk-or-v1-...
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+OPENAI_MODEL=openai/gpt-5.4-mini
+```
+
+### The weather tool
+
+By default `get_weather` is a stub (as the exercise requires): no HTTP, `sleep ~2s`, and
+always
+
+```json
+{"city": "<city>", "temp_c": 22, "condition": "parcialmente nublado"}
+```
+
+With `WEATHER_SOURCE=live` it geocodes the city and reads the current temperature and WMO
+weather code from [Open-Meteo](https://open-meteo.com/), keeping the same JSON shape.
+
+### The fake chat model
+
+`FakeWeatherChatModel` does what a real model would do in this graph, deterministically:
+given the user's message it asks for `get_weather` with the city that follows "em"
+("Qual o clima em Curitiba?" → Curitiba; São Paulo if none), and given the tool result it
+answers "Em <city> faz <temp>°C, <condition>." — streamed token by token with a small delay
+so the draft visibly grows.
+
+## API
 
 ```bash
 curl -N -X POST http://127.0.0.1:8000/agent/execute \
   -H 'Content-Type: application/json' \
   -d '{"message": "Qual o clima em São Paulo?"}'
 ```
-
-Cada frame tem `event:` (o `event` do `StreamEvent`) e `data:` (o `StreamEvent` inteiro,
-serializado com `langchain_core.load.dumps`):
 
 ```
 event: on_chat_model_stream
@@ -84,52 +117,55 @@ event: on_tool_start
 data: {"event": "on_tool_start", "name": "get_weather", "data": {"input": {"city": "São Paulo"}}, ...}
 ```
 
-## Testes
+`GET /agent/graph` returns the compiled graph's nodes and edges (`{nodes, edges}`, with
+conditional edges flagged); the front end draws it as SVG.
+
+## Tests
 
 ```bash
 uv run pytest
 ```
 
-Os testes cobrem tool, grafo, agent, codificação SSE e rota HTTP com um modelo falso — não
-chamam a OpenAI. A fumaça (AC-08) é manual: API no ar, `.env` preenchido, pergunta pelo
-front ou pelo `curl` acima.
+Tool (stub and live routing), Open-Meteo client (mocked transport), graph routing, agent
+event order, SSE encoding, the front↔back contract, and the HTTP routes — all with the fake
+model, no network.
 
-## Estrutura
+## Deploying to Vercel
+
+The repo is ready for Vercel's Python runtime: `pyproject.toml` declares the entrypoint
+(`[tool.vercel] entrypoint = "weather_agent.main:app"`), `vercel.json` sets `maxDuration`
+and excludes tests, and `.vercelignore` keeps `.env` out. With no environment variables the
+deployment runs the fake model and the stub tool; add `OPENAI_API_KEY` for a real model or
+`WEATHER_SOURCE=live` for real weather.
+
+```bash
+vercel deploy --prod
+```
+
+## Project layout
 
 ```
 weather_agent/
-  tools.py    get_weather — stub sem HTTP, sleep ~2s, JSON fixo (ou live, por env)
-  open_meteo.py  clima real via Open-Meteo, só com WEATHER_SOURCE=live
-  graph.py    StateGraph: nó model ↔ nó tools (ToolNode + tools_condition)
-  agent.py    compila o grafo e emite os StreamEvents de astream_events v2
-  sse.py      StreamEvent → frame SSE (event + data)
-  main.py     POST /agent/execute, GET /agent/graph, front estático em /
+  tools.py        get_weather — stub (default) or live via WEATHER_SOURCE
+  open_meteo.py   real weather client, only with WEATHER_SOURCE=live
+  graph.py        StateGraph: model node ↔ tools node (ToolNode + tools_condition)
+  agent.py        compiles the graph, streams astream_events v2, describes the graph
+  fake_model.py   deterministic chat model used when there is no API key
+  sse.py          StreamEvent → SSE frame (event + data)
+  main.py         POST /agent/execute, GET /agent/graph, static front end at /
 web/
   index.html, styles.css
-  app.js        carrega o grafo; formulário → fetch POST → loop de frames → render
-  sse.js        parser de text/event-stream sobre fetch
-  renderers.js  tipo de evento → renderer (on_chat_model_* | on_tool_*), senão erro
-  view.js       blocos na tela: rascunho, tool call, resultado, texto final; painel Stream
-  graph.js      SVG do grafo (layout em camadas) e nó ativo
+  app.js          loads the graph; form → fetch POST → frame loop → render
+  sse.js          text/event-stream parser over fetch (POST, so no EventSource)
+  renderers.js    event type → renderer (on_chat_model_* | on_tool_*), else throw
+  view.js         blocks on screen: draft, tool call, tool result, final text; Stream panel
+  graph.js        graph SVG (layered layout) and active node
 tests/
-docs/adr/       decisões de arquitetura
-CONTEXT.md      glossário do domínio
+docs/adr/         architecture decisions
+CONTEXT.md        domain glossary (in Portuguese, the exercise's language)
 ```
 
-## Como o front pinta (AC-06/07)
+## Out of scope
 
-- `on_chat_model_start` abre um rascunho; `on_chat_model_stream` concatena tokens nele —
-  tokens de texto como texto, `tool_call_chunks` como a tool call em construção
-  (`get_weather({"city":"São Pa…`).
-- `on_chat_model_end` substitui o rascunho daquela passada: por blocos de **tool call** se a
-  mensagem tem `tool_calls`, pelo **texto final** se tem texto.
-- `on_tool_start` marca o tool call como executando; `on_tool_end` cria o bloco
-  **resultado da tool**.
-- Qualquer outro tipo de evento lança erro, que aparece na tela.
-- Cada resposta tem um painel **Stream** com uma linha por `StreamEvent` recebido (tipo,
-  nome, resumo), na ordem de chegada — o mesmo que o `curl` mostra, na tela.
-
-## Fora de escopo
-
-Auth, persistência/checkpoint (cada mensagem é uma execução independente, sem memória),
-RAG, AG-UI, stream custom, HTTP de clima real.
+Auth, persistence/checkpoints (each message is an independent execution), RAG, AG-UI,
+custom stream formats.
