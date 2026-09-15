@@ -29,10 +29,19 @@ call, o JSON do stub e a frase com 22°C aparecerem em sequência.
 | `OPENAI_API_KEY`  | sim         | —                               |
 | `OPENAI_MODEL`    | não         | `gpt-5.4-mini`                  |
 | `OPENAI_BASE_URL` | não         | API da OpenAI                   |
+| `WEATHER_SOURCE`  | não         | `stub`                          |
 
 Para usar um provedor compatível com a API da OpenAI (ex.: OpenRouter), aponte
 `OPENAI_BASE_URL=https://openrouter.ai/api/v1` e use o id do modelo no formato do provedor
 (`OPENAI_MODEL=openai/gpt-5.4-mini`), com a chave do provedor em `OPENAI_API_KEY`.
+
+### Clima real (opcional, fora do enunciado)
+
+O AC-03 pede um stub: `get_weather` sem HTTP, `sleep ~2s`, sempre 22°C «parcialmente
+nublado». Esse é o padrão. Com `WEATHER_SOURCE=live` a tool consulta o clima real via
+[Open-Meteo](https://open-meteo.com/) (geocodificação + condições atuais, sem chave),
+mantendo o mesmo JSON `{"city", "temp_c", "condition"}`. Para a entrega avaliada pelos ACs,
+deixe o padrão (`stub`).
 
 O modelo padrão é da família de reasoning: não aceita `temperature`; usamos
 `reasoning_effort="none"` para o primeiro token chegar rápido.
@@ -73,7 +82,8 @@ front ou pelo `curl` acima.
 
 ```
 weather_agent/
-  tools.py    get_weather — stub sem HTTP, sleep ~2s, JSON fixo
+  tools.py    get_weather — stub sem HTTP, sleep ~2s, JSON fixo (ou live, por env)
+  open_meteo.py  clima real via Open-Meteo, só com WEATHER_SOURCE=live
   graph.py    StateGraph: nó model ↔ nó tools (ToolNode + tools_condition)
   agent.py    compila o grafo e emite os StreamEvents de astream_events v2
   sse.py      StreamEvent → frame SSE (event + data)
