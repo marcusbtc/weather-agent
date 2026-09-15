@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Weather Agent</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="chat">
+      <header class="chat-header">
+        <h1>Weather Agent</h1>
+        <p>Agent LangGraph · tool <code>get_weather</code> · SSE</p>
+      </header>
+
+      <section id="history" class="history" aria-live="polite"></section>
+
+      <form id="chat-form" class="composer" autocomplete="off">
+        <input
+          id="message"
+          name="message"
+          type="text"
+          placeholder="Qual o clima em São Paulo?"
+          autofocus
+          required
+        />
+        <button id="send" type="submit">Enviar</button>
+      </form>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

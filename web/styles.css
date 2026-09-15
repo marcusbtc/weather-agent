@@ -1,0 +1,165 @@
+:root {
+  color-scheme: dark;
+  --bg: #0f1115;
+  --panel: #171a21;
+  --border: #262a33;
+  --text: #e6e8ee;
+  --muted: #8b93a7;
+  --accent: #6ea8fe;
+  --tool: #f2c56b;
+  --result: #7fd1a3;
+  --error: #f0716b;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+.chat {
+  width: min(760px, 100%);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  gap: 16px;
+}
+
+.chat-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.chat-header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.history {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px;
+}
+
+.user-message {
+  align-self: flex-end;
+  max-width: 80%;
+  background: var(--accent);
+  color: #0b1220;
+  padding: 10px 14px;
+  border-radius: 14px 14px 4px 14px;
+  white-space: pre-wrap;
+}
+
+.response {
+  align-self: flex-start;
+  max-width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.block {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.block-text.draft {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.block-text.draft:empty::after {
+  content: "…";
+}
+
+.block-tool-call {
+  border-color: color-mix(in srgb, var(--tool) 45%, var(--border));
+}
+
+.block-tool-result {
+  border-color: color-mix(in srgb, var(--result) 45%, var(--border));
+}
+
+.block-error {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.status {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.block-tool-call .status {
+  color: var(--tool);
+}
+
+.block-tool-result .status {
+  color: var(--result);
+}
+
+.code {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.composer {
+  display: flex;
+  gap: 8px;
+}
+
+.composer input {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 15px;
+}
+
+.composer input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.composer button {
+  background: var(--accent);
+  color: #0b1220;
+  border: none;
+  border-radius: 10px;
+  padding: 0 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.composer button:disabled,
+.composer input:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

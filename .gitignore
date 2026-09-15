@@ -1,0 +1,13 @@
+# Segredo (AC-09)
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Editor / SO
+.DS_Store
+.idea/
+.vscode/
