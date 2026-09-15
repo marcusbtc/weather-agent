@@ -13,7 +13,7 @@ const graphContainer = document.querySelector("#graph");
 // sem o desenho.
 const graphPanel = await createGraphPanel(graphContainer).catch((error) => {
   console.error(error);
-  graphContainer.textContent = `Grafo indisponível: ${error.message}`;
+  graphContainer.textContent = `Graph unavailable: ${error.message}`;
   return null;
 });
 

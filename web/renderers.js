@@ -16,7 +16,7 @@ const RENDERERS = [
 
 export function render(view, type, event) {
   const match = RENDERERS.find(([pattern]) => pattern.test(type));
-  if (!match) throw new Error(`Tipo sem Renderer: ${type}`);
+  if (!match) throw new Error(`No renderer for event type: ${type}`);
   view.logEvent(type, event.name, summarize(type, event));
   // Todo StreamEvent nasce dentro de um nó do Grafo; o LangGraph anota qual.
   view.activateNode(event.metadata?.langgraph_node);
@@ -80,7 +80,7 @@ function summarize(type, event) {
           .map((p) => `tool_call_chunk ${p.name ?? ""}${JSON.stringify(p.args ?? "")}`)
           .join(" ");
       }
-      return "(chunk vazio)";
+      return "(empty chunk)";
     }
     case "on_chat_model_end": {
       const message = outputOf(event);

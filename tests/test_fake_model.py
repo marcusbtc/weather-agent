@@ -17,6 +17,24 @@ def test_fake_model_asks_for_the_weather_tool_with_the_city_in_the_message():
     ]
 
 
+def test_fake_model_understands_an_english_question_and_answers_in_english():
+    model = FakeWeatherChatModel()
+    question = HumanMessage("What's the weather in New York?")
+
+    decision = model.invoke([question])
+    assert decision.tool_calls[0]["args"] == {"city": "New York"}
+
+    tool_result = {"city": "New York", "temp_c": 22, "condition": "parcialmente nublado"}
+    answer = model.invoke(
+        [
+            question,
+            AIMessage(content="", tool_calls=[{"id": "call_1", "name": "get_weather", "args": {"city": "New York"}}]),
+            ToolMessage(content=json.dumps(tool_result), tool_call_id="call_1"),
+        ]
+    )
+    assert answer.content == "In New York it's 22°C, parcialmente nublado."
+
+
 def test_fake_model_defaults_to_sao_paulo_when_no_city_is_named():
     response = FakeWeatherChatModel().invoke([HumanMessage("e o clima?")])
 

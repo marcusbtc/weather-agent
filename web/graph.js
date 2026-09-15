@@ -12,7 +12,7 @@ const PAD = 16;
 
 export async function createGraphPanel(container) {
   const response = await fetch("/agent/graph");
-  if (!response.ok) throw new Error(`HTTP ${response.status} ao carregar o Grafo`);
+  if (!response.ok) throw new Error(`HTTP ${response.status} while loading the graph`);
   const graph = await response.json();
 
   const svg = draw(graph);
@@ -75,7 +75,7 @@ function draw({ nodes, edges }) {
     height,
     class: "graph-svg",
     role: "img",
-    "aria-label": "Grafo do agent",
+    "aria-label": "Agent graph",
   });
 
   const defs = svgEl("defs");

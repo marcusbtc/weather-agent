@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -11,9 +11,9 @@
       <header class="chat-header">
         <div>
           <h1>Weather Agent</h1>
-          <p>Agent LangGraph · tool <code>get_weather</code> · SSE</p>
+          <p>LangGraph agent · <code>get_weather</code> tool · SSE</p>
         </div>
-        <section id="graph" class="graph" aria-label="Grafo do agent"></section>
+        <section id="graph" class="graph" aria-label="Agent graph"></section>
       </header>
 
       <section id="history" class="history" aria-live="polite"></section>
@@ -23,11 +23,11 @@
           id="message"
           name="message"
           type="text"
-          placeholder="Qual o clima em São Paulo?"
+          placeholder="What's the weather in São Paulo?"
           autofocus
           required
         />
-        <button id="send" type="submit">Enviar</button>
+        <button id="send" type="submit">Send</button>
       </form>
     </main>
 

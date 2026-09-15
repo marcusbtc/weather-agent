@@ -2,8 +2,10 @@
 
 Faz o que um modelo de verdade faria neste Grafo, de forma determinística:
 - diante da Mensagem do usuário, pede `get_weather` com a cidade que aparece depois de
-  «em» («Qual o clima em Curitiba?» → Curitiba; sem cidade, São Paulo);
-- diante do Resultado da Tool, responde «Em <cidade> faz <temp>°C, <condição>.»
+  «em» ou «in» («Qual o clima em Curitiba?» → Curitiba; «weather in Lisbon?» → Lisbon;
+  sem cidade, São Paulo);
+- diante do Resultado da Tool, responde no idioma da pergunta:
+  «Em <cidade> faz <temp>°C, <condição>.» ou «In <city> it's <temp>°C, <condition>.»
 
 Emite tokens em stream com um pequeno atraso para o Rascunho crescer visivelmente.
 """
@@ -17,11 +19,15 @@ from typing import Any
 
 from langchain_core.callbacks import AsyncCallbackManagerForLLMRun, CallbackManagerForLLMRun
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, ToolMessage
+from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, HumanMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 
 DEFAULT_CITY = "São Paulo"
-CITY_PATTERN = re.compile(r"\bem\s+([^?!.,;]+)", re.IGNORECASE)
+CITY_PATTERN = re.compile(r"\b(em|in)\s+([^?!.,;]+)", re.IGNORECASE)
+ANSWERS = {
+    "pt": "Em {city} faz {temp_c}°C, {condition}.",
+    "en": "In {city} it's {temp_c}°C, {condition}.",
+}
 
 
 class FakeWeatherChatModel(BaseChatModel):
@@ -67,15 +73,16 @@ class FakeWeatherChatModel(BaseChatModel):
 
     def _decide(self, messages: list[BaseMessage]) -> AIMessage:
         last = messages[-1]
+        question = next((str(m.content) for m in reversed(messages) if isinstance(m, HumanMessage)), "")
         if isinstance(last, ToolMessage):
-            return AIMessage(content=self._answer_from(last))
+            return AIMessage(content=self._answer_from(last, self._language_of(question)))
         return AIMessage(
             content="",
             tool_calls=[
                 {
                     "id": "call_fake_1",
                     "name": "get_weather",
-                    "args": {"city": self._city_in(str(last.content))},
+                    "args": {"city": self._city_in(question or str(last.content))},
                 }
             ],
         )
@@ -83,15 +90,20 @@ class FakeWeatherChatModel(BaseChatModel):
     @staticmethod
     def _city_in(text: str) -> str:
         match = CITY_PATTERN.search(text)
-        return match.group(1).strip() if match else DEFAULT_CITY
+        return match.group(2).strip() if match else DEFAULT_CITY
 
     @staticmethod
-    def _answer_from(tool_message: ToolMessage) -> str:
+    def _language_of(text: str) -> str:
+        match = CITY_PATTERN.search(text)
+        return "en" if match and match.group(1).lower() == "in" else "pt"
+
+    @staticmethod
+    def _answer_from(tool_message: ToolMessage, language: str) -> str:
         try:
             weather = json.loads(str(tool_message.content))
         except json.JSONDecodeError:
-            return "Não consegui ler o resultado da tool."
-        return f"Em {weather['city']} faz {weather['temp_c']}°C, {weather['condition']}."
+            return "Could not read the tool result." if language == "en" else "Não consegui ler o resultado da tool."
+        return ANSWERS[language].format(**weather)
 
     # ── stream ───────────────────────────────────────────────────────────────────
 

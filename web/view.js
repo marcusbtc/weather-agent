@@ -63,7 +63,7 @@ export function createResponseView(container, graphPanel) {
       if (!toolCallDraft) {
         toolCallDraft = { name: "", args: "" };
         draft.classList.add("block-tool-call");
-        draft.appendChild(label("Tool call · montando…", "status"));
+        draft.appendChild(label("Tool call · assembling…", "status"));
         draft.appendChild(code(""));
       }
       toolCallDraft.name += name;
@@ -101,7 +101,7 @@ export function createResponseView(container, graphPanel) {
       if (!block) return;
       block.dataset.runId = runId;
       toolCallsByRunId.set(runId, block);
-      block.querySelector(".status").textContent = "Tool call · executando…";
+      block.querySelector(".status").textContent = "Tool call · running…";
     },
 
     addToolResult({ toolCallId, runId, name }, content) {
@@ -113,7 +113,7 @@ export function createResponseView(container, graphPanel) {
       }
 
       const block = el("div", "block block-tool-result");
-      block.appendChild(label(`Resultado · ${name}`, "status"));
+      block.appendChild(label(`Tool result · ${name}`, "status"));
       block.appendChild(code(prettyJson(content)));
       root.appendChild(block);
       scroll();
@@ -139,12 +139,12 @@ function createStreamPanel(root) {
   root.appendChild(details);
 
   let count = 0;
-  summary.textContent = "Stream · 0 eventos";
+  summary.textContent = "Stream · 0 events";
 
   return {
     add(type, name, text) {
       count += 1;
-      summary.textContent = `Stream · ${count} eventos`;
+      summary.textContent = `Stream · ${count} event${count === 1 ? "" : "s"}`;
 
       const item = el("li", `stream-item ${type.startsWith("on_tool_") ? "is-tool" : "is-model"}`);
       item.appendChild(label(type, "stream-type"));

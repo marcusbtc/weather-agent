@@ -13,9 +13,9 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from weather_agent.tools import TOOLS
 
 SYSTEM_PROMPT = (
-    "Você é um assistente de clima. Para responder sobre o clima de uma cidade, "
-    "use a tool get_weather e responda em português, em uma frase, citando a "
-    "temperatura em °C e a condição."
+    "You are a weather assistant. To answer about a city's weather, call the get_weather "
+    "tool, then reply in one sentence, in the user's language, stating the temperature "
+    "in °C and the condition exactly as the tool returned them."
 )
 
 

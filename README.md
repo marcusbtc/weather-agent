@@ -54,8 +54,9 @@ uv run uvicorn weather_agent.main:app --reload
 ```
 
 One process serves both: the API at `http://127.0.0.1:8000/agent/execute` and the front end
-at `http://127.0.0.1:8000/`. Ask "Qual o clima em São Paulo?" and watch the tool call, the
-tool result and the sentence appear in sequence.
+at `http://127.0.0.1:8000/`. Ask "What's the weather in São Paulo?" (or, in Portuguese,
+"Qual o clima em São Paulo?") and watch the tool call, the tool result and the sentence
+appear in sequence.
 
 ### Environment (`.env` at the repo root, gitignored)
 
@@ -96,17 +97,19 @@ weather code from [Open-Meteo](https://open-meteo.com/), keeping the same JSON s
 ### The fake chat model
 
 `FakeWeatherChatModel` does what a real model would do in this graph, deterministically:
-given the user's message it asks for `get_weather` with the city that follows "em"
-("Qual o clima em Curitiba?" → Curitiba; São Paulo if none), and given the tool result it
-answers "Em <city> faz <temp>°C, <condition>." — streamed token by token with a small delay
-so the draft visibly grows.
+given the user's message it asks for `get_weather` with the city that follows "in" or "em"
+("What's the weather in Lisbon?" → Lisbon; "Qual o clima em Curitiba?" → Curitiba; São
+Paulo if none), and given the tool result it answers in the question's language — "In
+<city> it's <temp>°C, <condition>." or "Em <city> faz <temp>°C, <condition>." — streamed
+token by token with a small delay so the draft visibly grows. The stub's condition string
+stays in Portuguese (`parcialmente nublado`), as the exercise fixes it.
 
 ## API
 
 ```bash
 curl -N -X POST http://127.0.0.1:8000/agent/execute \
   -H 'Content-Type: application/json' \
-  -d '{"message": "Qual o clima em São Paulo?"}'
+  -d '{"message": "What'\''s the weather in São Paulo?"}'
 ```
 
 ```
