@@ -4,10 +4,12 @@ A LangGraph agent with a weather tool and an SSE chat. `POST /agent/execute` tak
 message, runs the graph (model ↔ tools) and streams the `astream_events` v2 `StreamEvent`s
 back as `text/event-stream`. The front end reads the stream and paints each event type as
 a separate state: tool call, tool result, text — while highlighting the active graph node.
+The graph sits under the composer; **Show graph** next to Send hides it, and the choice
+is kept in `localStorage`.
 
 **Live demo:** https://weather-agent-beta.vercel.app · **Source:** https://github.com/marcusbtc/weather-agent
 
-![Weather Agent running: graph on top, event stream, tool call, tool result and final text](docs/screenshot.png)
+![Weather Agent running: event stream, tool call, tool result, final text, and the graph under the composer](docs/screenshot.png)
 
 The demo runs with no API key: without `OPENAI_API_KEY` the agent falls back to a
 deterministic fake chat model — the graph, the tool, the event stream and the SSE are all
@@ -41,7 +43,8 @@ graph LR
    - `on_tool_start` marks the tool call as running; `on_tool_end` adds the **tool result**
      block;
    - every event lights up its graph node (`metadata.langgraph_node`) and is listed in the
-     **Stream** panel.
+     **Stream** panel. **Show graph** (next to Send) hides the drawing; the preference is
+     stored in `localStorage` as `weather-agent:graph-visible`.
 
 ## Running locally
 
@@ -56,7 +59,8 @@ uv run uvicorn weather_agent.main:app --reload
 One process serves both: the API at `http://127.0.0.1:8000/agent/execute` and the front end
 at `http://127.0.0.1:8000/`. Ask "What's the weather in São Paulo?" (or, in Portuguese,
 "Qual o clima em São Paulo?") and watch the tool call, the tool result and the sentence
-appear in sequence.
+appear in sequence. The graph is under the chat; turn **Show graph** off if you want the
+drawing out of the way.
 
 ### Environment (`.env` at the repo root, gitignored)
 
@@ -161,7 +165,7 @@ weather_agent/
   main.py         POST /agent/execute, GET /agent/graph, static front end at /
 web/
   index.html, styles.css
-  app.js          loads the graph; form → fetch POST → frame loop → render
+  app.js          loads the graph, Show graph toggle; form → fetch POST → frame loop → render
   sse.js          text/event-stream parser over fetch (POST, so no EventSource)
   renderers.js    event type → renderer (on_chat_model_* | on_tool_*), else throw
   view.js         blocks on screen: draft, tool call, tool result, final text; Stream panel
@@ -173,5 +177,5 @@ CONTEXT.md        domain glossary
 
 ## Out of scope
 
-Auth, persistence/checkpoints (each message is an independent execution), RAG, AG-UI,
-custom stream formats.
+Auth, persistence/checkpoints (each message is an independent execution; the Show graph
+preference is only in the browser), RAG, AG-UI, custom stream formats.
