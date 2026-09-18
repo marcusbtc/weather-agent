@@ -13,6 +13,8 @@ const emptyTemplate = document.querySelector("#empty-template");
 
 const GRAPH_VISIBLE_KEY = "weather-agent:graph-visible";
 
+let busy = false;
+
 initGraphVisibility();
 showEmpty();
 
@@ -24,10 +26,14 @@ const graphPanel = await createGraphPanel(graphContainer).catch((error) => {
   return null;
 });
 
-form.addEventListener("submit", async (submit) => {
+form.addEventListener("submit", (submit) => {
   submit.preventDefault();
-  const message = input.value.trim();
-  if (!message) return;
+  void send(input.value);
+});
+
+async function send(raw) {
+  const message = raw.trim();
+  if (!message || busy) return;
 
   input.value = "";
   document.querySelector("#empty")?.remove();
@@ -44,7 +50,7 @@ form.addEventListener("submit", async (submit) => {
     setBusy(false);
     input.focus();
   }
-});
+}
 
 // Every Execution is independent: only the current Message goes to the server.
 async function execute(message, view) {
@@ -61,9 +67,13 @@ async function execute(message, view) {
   }
 }
 
-function setBusy(busy) {
-  input.disabled = busy;
-  sendButton.disabled = busy;
+function setBusy(on) {
+  busy = on;
+  input.disabled = on;
+  sendButton.disabled = on;
+  history.querySelectorAll("[data-suggest]").forEach((button) => {
+    button.disabled = on;
+  });
 }
 
 function initGraphVisibility() {
@@ -85,4 +95,11 @@ function setGraphVisible(visible) {
 
 function showEmpty() {
   history.replaceChildren(emptyTemplate.content.cloneNode(true));
+  bindSuggests();
+}
+
+function bindSuggests() {
+  history.querySelectorAll("[data-suggest]").forEach((button) => {
+    button.addEventListener("click", () => void send(button.dataset.suggest));
+  });
 }

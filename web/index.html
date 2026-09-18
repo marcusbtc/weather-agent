@@ -39,7 +39,18 @@
           <span class="switch" aria-hidden="true"></span>
           Show graph
         </label>
-        <button id="send" type="submit">Send</button>
+        <button id="send" type="submit">
+          <svg class="send-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M12 19V5M5 12l7-7 7 7"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Send
+        </button>
       </form>
       <section id="graph" class="graph" aria-label="Agent graph"></section>
     </main>
@@ -47,9 +58,20 @@
     <template id="empty-template">
       <div id="empty" class="empty">
         <h2>Ask a city. Watch the graph move.</h2>
+        <div class="empty-asks">
+          <button type="button" data-suggest="What's the weather in São Paulo?">
+            What's the weather in São Paulo?
+          </button>
+          <button type="button" data-suggest="How will the week's weather be in São Paulo?">
+            How will the week's weather be in São Paulo?
+          </button>
+          <button type="button" data-suggest="What season is it now in each hemisphere?">
+            What season is it now in each hemisphere?
+          </button>
+        </div>
       </div>
     </template>
 
-    <script type="module" src="./app.js?v=12"></script>
+    <script type="module" src="./app.js?v=18"></script>
   </body>
 </html>
