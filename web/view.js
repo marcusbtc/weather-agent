@@ -7,6 +7,10 @@ export function createResponseView(container, graphPanel) {
   container.appendChild(root);
 
   const stream = createStreamPanel(root);
+  const toolsSlot = el("div", "response-tools");
+  const messages = el("div", "response-text");
+  const results = el("div", "response-results");
+  root.append(toolsSlot, messages, results);
   graphPanel?.reset();
   graphPanel?.activate("__start__");
 
@@ -21,6 +25,7 @@ export function createResponseView(container, graphPanel) {
   // resolves by tool_call_id, with run_id as fallback.
   const toolCallsById = new Map();
   const toolCallsByRunId = new Map();
+  const pendingResults = [];
 
   function scroll() {
     container.scrollTop = container.scrollHeight;
@@ -29,13 +34,18 @@ export function createResponseView(container, graphPanel) {
   function ensureDraft() {
     if (draft) return;
     draft = el("div", "block block-text draft");
-    root.appendChild(draft);
+    messages.appendChild(draft);
   }
 
   function dropDraft() {
     draft?.remove();
     draft = null;
     toolCallDraft = null;
+  }
+
+  function flushPendingResults() {
+    for (const block of pendingResults) results.appendChild(block);
+    pendingResults.length = 0;
   }
 
   return {
@@ -79,16 +89,20 @@ export function createResponseView(container, graphPanel) {
       draft.textContent = text;
       draft.classList.remove("draft");
       draft = null;
+      flushPendingResults();
       scroll();
     },
 
     addToolCalls(toolCalls) {
       for (const call of toolCalls) {
-        const block = el("div", "block block-tool-call");
+        const block = el("details", "block block-tool-call");
+        block.open = false;
         block.dataset.toolName = call.name;
-        block.appendChild(label("Tool call", "status"));
+        const summary = el("summary", "status");
+        summary.textContent = "Tool call";
+        block.appendChild(summary);
         block.appendChild(code(`${call.name}(${JSON.stringify(call.args)})`));
-        root.appendChild(block);
+        toolsSlot.appendChild(block);
         toolCallsById.set(call.id, block);
       }
       scroll();
@@ -114,12 +128,19 @@ export function createResponseView(container, graphPanel) {
 
       const block = el("div", "block block-tool-result");
       block.appendChild(label(`Tool result · ${name}`, "status"));
-      block.appendChild(code(prettyJson(content)));
-      root.appendChild(block);
-      scroll();
+      const raw = el("details", "tool-json");
+      const summary = el("summary", "");
+      summary.textContent = "JSON";
+      raw.appendChild(summary);
+      raw.appendChild(code(prettyJson(content)));
+      block.appendChild(raw);
+      const weather = parseWeather(content);
+      if (weather) block.appendChild(weatherCard(weather));
+      pendingResults.push(block);
     },
 
     showError(message) {
+      flushPendingResults();
       const block = el("div", "block block-error");
       block.textContent = message;
       root.appendChild(block);
@@ -131,7 +152,7 @@ export function createResponseView(container, graphPanel) {
 // Collapsible panel with one line per StreamEvent, in arrival order.
 function createStreamPanel(root) {
   const details = el("details", "stream");
-  details.open = true;
+  details.open = false;
   const summary = el("summary", "stream-summary");
   const list = el("ol", "stream-list");
   details.appendChild(summary);
@@ -179,6 +200,37 @@ function code(text) {
   const node = el("pre", "code");
   node.textContent = text;
   return node;
+}
+
+function parseWeather(content) {
+  try {
+    const raw = typeof content === "string" ? JSON.parse(content) : content;
+    if (!raw || typeof raw !== "object") return null;
+    const city = raw.city;
+    const temp = Number(raw.temp_c);
+    if (typeof city !== "string" || !Number.isFinite(temp)) return null;
+    return {
+      city,
+      tempC: temp,
+      condition: typeof raw.condition === "string" ? raw.condition : "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+function weatherCard(weather) {
+  const card = el("div", "weather");
+  const temp = el("div", "weather-temp");
+  temp.append(String(Math.round(weather.tempC)));
+  const unit = document.createElement("sup");
+  unit.textContent = "°C";
+  temp.appendChild(unit);
+  const meta = el("div", "weather-meta");
+  meta.appendChild(label(weather.condition || "—", "weather-cond"));
+  meta.appendChild(label(weather.city, "weather-city"));
+  card.append(temp, meta);
+  return card;
 }
 
 function prettyJson(text) {
