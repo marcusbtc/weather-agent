@@ -3,21 +3,29 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Weather Agent</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <meta name="description" content="LangGraph weather agent with a live event stream." />
+    <title>Weather LangGraph Agent</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css?v=20" />
   </head>
   <body>
+    <a class="skip-link" href="#message">Skip to message</a>
+
     <main class="chat">
       <header class="chat-header">
-        <div>
-          <h1>Weather Agent</h1>
-          <p>LangGraph agent · <code>get_weather</code> tool · SSE</p>
-        </div>
+        <h1>Weather LangGraph Agent</h1>
       </header>
 
       <section id="history" class="history" aria-live="polite"></section>
 
       <form id="chat-form" class="composer" autocomplete="off">
+        <label class="visually-hidden" for="message">Message</label>
         <input
           id="message"
           name="message"
@@ -36,6 +44,12 @@
       <section id="graph" class="graph" aria-label="Agent graph"></section>
     </main>
 
-    <script type="module" src="./app.js"></script>
+    <template id="empty-template">
+      <div id="empty" class="empty">
+        <h2>Ask a city. Watch the graph move.</h2>
+      </div>
+    </template>
+
+    <script type="module" src="./app.js?v=12"></script>
   </body>
 </html>
