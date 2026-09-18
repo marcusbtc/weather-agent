@@ -12,16 +12,41 @@
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20" />
+    <link rel="stylesheet" href="./styles.css?v=28" />
   </head>
   <body>
     <a class="skip-link" href="#message">Skip to message</a>
 
-    <main class="chat">
-      <header class="chat-header">
-        <h1>Weather LangGraph Agent</h1>
-      </header>
+    <aside id="sidebar" class="sidebar" aria-label="Threads">
+      <div class="rail">
+        <button id="sidebar-open" type="button" class="menu-toggle" aria-controls="sidebar" aria-expanded="true" aria-label="Open menu">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path d="M3 5h12M3 9h12M3 13h12" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <div class="sidebar-main">
+        <div class="sidebar-top">
+          <h1>Weather LangGraph Agent</h1>
+          <button id="sidebar-close" type="button" class="sidebar-new" aria-label="Close menu">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M10 3 5 8l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+        <div class="sidebar-threads-head">
+          <p class="sidebar-label">Threads</p>
+          <button id="new-thread" type="button" class="sidebar-new" aria-label="New thread">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+        <nav id="thread-list" class="thread-list" aria-label="Previous threads"></nav>
+      </div>
+    </aside>
 
+    <main class="chat">
       <section id="history" class="history" aria-live="polite"></section>
 
       <form id="chat-form" class="composer" autocomplete="off">
