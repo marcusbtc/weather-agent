@@ -8,6 +8,11 @@ const input = document.querySelector("#message");
 const sendButton = document.querySelector("#send");
 const history = document.querySelector("#history");
 const graphContainer = document.querySelector("#graph");
+const graphVisibleToggle = document.querySelector("#graph-visible");
+
+const GRAPH_VISIBLE_KEY = "weather-agent:graph-visible";
+
+initGraphVisibility();
 
 // The Graph is the same for every Execution; load it once. If it fails, the chat goes on
 // without the drawing.
@@ -56,4 +61,21 @@ async function execute(message, view) {
 function setBusy(busy) {
   input.disabled = busy;
   sendButton.disabled = busy;
+}
+
+function initGraphVisibility() {
+  const stored = localStorage.getItem(GRAPH_VISIBLE_KEY);
+  const visible = stored === null ? true : stored === "true";
+  graphVisibleToggle.checked = visible;
+  setGraphVisible(visible);
+
+  graphVisibleToggle.addEventListener("change", () => {
+    const show = graphVisibleToggle.checked;
+    localStorage.setItem(GRAPH_VISIBLE_KEY, String(show));
+    setGraphVisible(show);
+  });
+}
+
+function setGraphVisible(visible) {
+  graphContainer.hidden = !visible;
 }

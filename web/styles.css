@@ -47,6 +47,64 @@ body {
   font-size: 12px;
 }
 
+.graph[hidden] {
+  display: none;
+}
+
+.graph-toggle {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.graph-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.switch {
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text);
+}
+
+.graph-toggle input:checked + .switch {
+  background: color-mix(in srgb, var(--accent) 35%, var(--panel));
+  border-color: var(--accent);
+}
+
+.graph-toggle input:checked + .switch::after {
+  transform: translateX(14px);
+}
+
+.graph-toggle input:focus-visible + .switch {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 .graph-svg {
   display: block;
   max-width: 100%;
@@ -253,6 +311,7 @@ body {
 
 .composer {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
