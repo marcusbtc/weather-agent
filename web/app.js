@@ -1,6 +1,6 @@
 import { readSse } from "./sse.js";
 import { render } from "./renderers.js";
-import { appendUserMessage, createResponseView } from "./view.js";
+import { appendUserMessage, createResponseView } from "./view.js?v=11";
 import { createGraphPanel } from "./graph.js";
 
 const form = document.querySelector("#chat-form");
