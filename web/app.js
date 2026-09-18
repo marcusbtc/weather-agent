@@ -9,10 +9,12 @@ const sendButton = document.querySelector("#send");
 const history = document.querySelector("#history");
 const graphContainer = document.querySelector("#graph");
 const graphVisibleToggle = document.querySelector("#graph-visible");
+const emptyTemplate = document.querySelector("#empty-template");
 
 const GRAPH_VISIBLE_KEY = "weather-agent:graph-visible";
 
 initGraphVisibility();
+showEmpty();
 
 // The Graph is the same for every Execution; load it once. If it fails, the chat goes on
 // without the drawing.
@@ -28,6 +30,7 @@ form.addEventListener("submit", async (submit) => {
   if (!message) return;
 
   input.value = "";
+  document.querySelector("#empty")?.remove();
   setBusy(true);
   appendUserMessage(history, message);
   const view = createResponseView(history, graphPanel);
@@ -78,4 +81,8 @@ function initGraphVisibility() {
 
 function setGraphVisible(visible) {
   graphContainer.hidden = !visible;
+}
+
+function showEmpty() {
+  history.replaceChildren(emptyTemplate.content.cloneNode(true));
 }
