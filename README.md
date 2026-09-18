@@ -3,17 +3,32 @@
 A LangGraph agent with a weather tool and an SSE chat. `POST /agent/execute` takes a
 message, runs the graph (model ↔ tools) and streams the `astream_events` v2 `StreamEvent`s
 back as `text/event-stream`. The front end reads the stream and paints each event type as
-a separate state: tool call, tool result, text — while highlighting the active graph node.
-The graph sits under the composer; **Show graph** next to Send hides it, and the choice
-is kept in `localStorage`.
+a separate state — tool call, final text, tool result — while highlighting the active
+graph node.
 
 **Live demo:** https://weather-agent-beta.vercel.app · **Source:** https://github.com/marcusbtc/weather-agent
 
-![Weather Agent running: event stream, tool call, tool result, final text, and the graph under the composer](docs/screenshot.png)
+![Weather LangGraph Agent: thread sidebar, collapsed stream and tool call, reply, weather card, Show graph toggle and the graph under the composer](docs/screenshot.png)
 
-The demo runs with no API key: without `OPENAI_API_KEY` the agent falls back to a
-deterministic fake chat model — the graph, the tool, the event stream and the SSE are all
-real; only the LLM is replaced.
+The demo runs with no API key. Without `OPENAI_API_KEY` the agent falls back to
+`FakeWeatherChatModel`: the graph, the tool, the event stream and the SSE are all real;
+only the LLM is replaced. The front end is the same either way.
+
+## What the UI does
+
+- **Threads** live in a left sidebar. `+` starts a new thread. Clicking a thread restores
+  its history. There is no server memory: each `POST /agent/execute` is still an
+  independent run. The sidebar only snapshots the DOM in `localStorage`.
+- **Collapse the sidebar** with the chevron. A 48px rail stays on the left so you can
+  open the menu again.
+- **Empty state** offers three chips (São Paulo now, the week's weather, hemisphere
+  seasons). Each chip sends that prompt.
+- **Show graph** (next to Send) hides the SVG under the composer. The choice is kept in
+  `localStorage` as `weather-agent:graph-visible`.
+- **Stream** and **Tool call** start collapsed so the sentence can lead.
+- **Tool result** waits until that sentence finishes streaming, then appears below it.
+  The weather card (temperature, condition, city) is on the card; **JSON** sits on the
+  same header row and expands the raw payload.
 
 ## How it works
 
@@ -40,11 +55,10 @@ graph LR
      `tool_call_chunks` as the tool call being assembled: `get_weather({"city":"São Pa…`);
    - `on_chat_model_end` replaces that pass's draft with the **final text**, or with
      **tool call** blocks when the message has `tool_calls`;
-   - `on_tool_start` marks the tool call as running; `on_tool_end` adds the **tool result**
-     block;
+   - `on_tool_start` marks the tool call as running; `on_tool_end` builds the **tool
+     result** card but holds it until the next text pass finishes;
    - every event lights up its graph node (`metadata.langgraph_node`) and is listed in the
-     **Stream** panel. **Show graph** (next to Send) hides the drawing; the preference is
-     stored in `localStorage` as `weather-agent:graph-visible`.
+     **Stream** panel.
 
 ## Running locally
 
@@ -58,9 +72,9 @@ uv run uvicorn weather_agent.main:app --reload
 
 One process serves both: the API at `http://127.0.0.1:8000/agent/execute` and the front end
 at `http://127.0.0.1:8000/`. Ask "What's the weather in São Paulo?" (or, in Portuguese,
-"Qual o clima em São Paulo?") and watch the tool call, the tool result and the sentence
-appear in sequence. The graph is under the chat; turn **Show graph** off if you want the
-drawing out of the way.
+"Qual o clima em São Paulo?") — or click a chip — and watch the tool call, the sentence
+and the weather card appear in sequence. The graph is under the chat; turn **Show graph**
+off if you want the drawing out of the way.
 
 ### Environment (`.env` at the repo root, gitignored)
 
@@ -96,19 +110,41 @@ always
 ```
 
 With `WEATHER_SOURCE=live` it geocodes the city and reads the current temperature and WMO
-weather code from [Open-Meteo](https://open-meteo.com/), keeping the same JSON shape.
+weather code from [Open-Meteo](https://open-meteo.com/), keeping the same JSON shape. The
+demo in the screenshot uses `live`.
 
 ### The fake chat model
 
-`FakeWeatherChatModel` does what a real model would do in this graph, deterministically:
-given the user's message it asks for `get_weather` with the city that follows "in" or "em"
-("What's the weather in Lisbon?" → Lisbon; "Qual o clima em Curitiba?" → Curitiba; São
-Paulo if none), and given the tool result it answers entirely in the question's language —
-"In <city> it's 22°C, partly cloudy." or "Em <city> faz 22°C, parcialmente nublado." —
-streamed token by token with a small delay so the draft visibly grows. The tools return
-the condition in Portuguese (the stub's `parcialmente nublado` is fixed by the exercise);
-`weather_agent/conditions.py` translates it for English answers, and the real model is
-told to do the same.
+`FakeWeatherChatModel` (`weather_agent/fake_model.py`) is a real LangChain `BaseChatModel`
+with `_generate`, `_stream` and `_astream`. It does **not** call OpenAI. It does what a
+real model would do in *this* graph, deterministically, so the rest of the stack can be
+demoed and tested without a key.
+
+**When it is used**
+
+- no `OPENAI_API_KEY`, or
+- `MODEL_SOURCE=fake` (even if a key is set).
+
+The Vercel demo uses this path.
+
+**What it does**
+
+1. On the first pass (the last message is a human turn) it emits a `get_weather` tool
+   call. The city is the text after `in` or `em` — "What's the weather in Lisbon?" →
+   Lisbon; "Qual o clima em Curitiba?" → Curitiba; **São Paulo** if neither matches.
+2. On the second pass (the last message is the tool result) it writes a one-line answer
+   in the **question's** language:
+   - English (`in …`): `In <city> it's <temp>°C, <condition>.`
+   - Portuguese (`em …`, or no match): `Em <city> faz <temp>°C, <condition>.`
+3. Tokens stream with a small delay (`token_delay`, default 0.04s) so the draft visibly
+   grows — same event types as `ChatOpenAI`.
+
+The tools always return the condition in Portuguese (the stub's `parcialmente nublado` is
+fixed by the exercise). `weather_agent/conditions.py` translates that label for English
+answers. The real model is told to do the same in its system prompt.
+
+`bind_tools` is a no-op: the fake model always calls `get_weather`. It is not a general
+chat model; it only walks this weather graph.
 
 ## API
 
@@ -164,11 +200,11 @@ weather_agent/
   sse.py          StreamEvent → SSE frame (event + data)
   main.py         POST /agent/execute, GET /agent/graph, static front end at /
 web/
-  index.html, styles.css
-  app.js          loads the graph, Show graph toggle; form → fetch POST → frame loop → render
+  index.html, styles.css, favicon.svg
+  app.js          graph toggle, threads, empty chips; form → fetch POST → render
   sse.js          text/event-stream parser over fetch (POST, so no EventSource)
   renderers.js    event type → renderer (on_chat_model_* | on_tool_*), else throw
-  view.js         blocks on screen: draft, tool call, tool result, final text; Stream panel
+  view.js         blocks: draft, tool call, held tool result, final text; Stream panel
   graph.js        graph SVG (layered layout) and active node
 tests/
 docs/adr/         architecture decisions
@@ -177,5 +213,5 @@ CONTEXT.md        domain glossary
 
 ## Out of scope
 
-Auth, persistence/checkpoints (each message is an independent execution; the Show graph
-preference is only in the browser), RAG, AG-UI, custom stream formats.
+Auth, server-side persistence/checkpoints (each message is an independent execution;
+threads, sidebar and Show graph are browser-only), RAG, AG-UI, custom stream formats.
